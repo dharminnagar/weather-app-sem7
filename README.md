@@ -4,12 +4,24 @@ A small weather app built with Next.js (App Router), TypeScript and Tailwind
 CSS. The UI talks only to this project's own `/api/weather` route, which
 proxies [Open-Meteo](https://open-meteo.com) for geocoding and forecasts.
 
+## Features
+
+- Search current conditions by city name
+- "Use my location" via the browser's geolocation (with permission)
+- Current temperature, feels-like, humidity and wind
+- 7-day forecast with highs, lows and chance of rain
+- Loading, empty and error states; dark mode follows the system setting
+
+## Running locally
+
+Requires [Bun](https://bun.sh).
+
 ```bash
 bun install
-bun run dev
+bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000). No API key is needed.
 
 ## Weather API
 
@@ -75,5 +87,5 @@ reported as `{ "label": "Unknown", "icon": "🌡️" }`.
 | Status | When                                                                                        |
 | ------ | ------------------------------------------------------------------------------------------- |
 | `400`  | No `city` and no `lat`/`lon`; blank or too-long `city`; invalid or out-of-range coordinates |
-| `404`  | `city` could not be geocoded, e.g. `City "Atlantis" not found`                              |
+| `404`  | `city` could not be geocoded, e.g. `City "Xyzzyqwplk" not found`                            |
 | `502`  | Open-Meteo returned an error or was unreachable (`Weather service unavailable`)             |
