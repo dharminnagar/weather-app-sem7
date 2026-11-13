@@ -1,36 +1,79 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Weather App
 
-## Getting Started
-
-First, run the development server:
+A small weather app built with Next.js (App Router), TypeScript and Tailwind
+CSS. The UI talks only to this project's own `/api/weather` route, which
+proxies [Open-Meteo](https://open-meteo.com) for geocoding and forecasts.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+bun install
+bun run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Weather API
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### `GET /api/weather`
 
-## Learn More
+Returns current conditions and a 7-day daily forecast. Provide **either** a
+city name **or** coordinates. If `city` is present it takes precedence.
 
-To learn more about Next.js, take a look at the following resources:
+| Param  | Type   | Rules                                     |
+| ------ | ------ | ----------------------------------------- |
+| `city` | string | Non-blank, at most 100 characters         |
+| `lat`  | number | Required with `lon`; between -90 and 90   |
+| `lon`  | number | Required with `lat`; between -180 and 180 |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Examples:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+/api/weather?city=Ahmedabad
+/api/weather?lat=23.02&lon=72.57
+```
 
-## Deploy on Vercel
+Coordinate lookups return `"name": "Your location"` and `"country": null`.
+The timezone is filled in from the forecast response.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Response `200` (`WeatherReport` in `lib/weather/types.ts`)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```json
+{
+  "location": {
+    "name": "Ahmedabad",
+    "country": "India",
+    "latitude": 23.02579,
+    "longitude": 72.58727,
+    "timezone": "Asia/Kolkata"
+  },
+  "current": {
+    "time": "2026-11-13T14:30",
+    "temperatureC": 31.2,
+    "feelsLikeC": 30.4,
+    "humidityPercent": 28,
+    "windSpeedKmh": 9.8,
+    "isDay": true,
+    "condition": { "code": 0, "label": "Clear sky", "icon": "☀️" }
+  },
+  "daily": [
+    {
+      "date": "2026-11-13",
+      "maxC": 32.5,
+      "minC": 18.9,
+      "precipitationChancePercent": 0,
+      "condition": { "code": 1, "label": "Mainly clear", "icon": "🌤️" }
+    }
+  ]
+}
+```
+
+`daily` has 7 entries. `precipitationChancePercent` may be `null`. `time` and
+`date` are local to the location's timezone. Unknown weather codes are
+reported as `{ "label": "Unknown", "icon": "🌡️" }`.
+
+### Errors (`{ "error": string }`)
+
+| Status | When                                                                                        |
+| ------ | ------------------------------------------------------------------------------------------- |
+| `400`  | No `city` and no `lat`/`lon`; blank or too-long `city`; invalid or out-of-range coordinates |
+| `404`  | `city` could not be geocoded, e.g. `City "Atlantis" not found`                              |
+| `502`  | Open-Meteo returned an error or was unreachable (`Weather service unavailable`)             |
