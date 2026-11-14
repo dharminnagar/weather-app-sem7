@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { WeatherErrorBody, WeatherReport } from '@/lib/weather/types';
 
+/** How the user asked for the report; only city searches can be saved as favourites. */
+export type WeatherSource = 'city' | 'coords';
+
 export type WeatherState =
   | { status: 'idle' }
   | { status: 'loading' }
-  | { status: 'success'; report: WeatherReport }
+  | { status: 'success'; report: WeatherReport; source: WeatherSource }
   | { status: 'error'; message: string };
 
 export type UseWeatherResult = {
@@ -51,7 +54,7 @@ export function useWeather(): UseWeatherResult {
   useEffect(() => abortInFlight, [abortInFlight]);
 
   const fetchWeather = useCallback(
-    async (params: URLSearchParams): Promise<void> => {
+    async (params: URLSearchParams, source: WeatherSource): Promise<void> => {
       abortInFlight();
       const controller = new AbortController();
       inFlightRef.current = controller;
@@ -65,6 +68,7 @@ export function useWeather(): UseWeatherResult {
           ? {
               status: 'success',
               report: (await response.json()) as WeatherReport,
+              source,
             }
           : { status: 'error', message: await readErrorMessage(response) };
         if (!controller.signal.aborted) setState(nextState);
@@ -80,7 +84,7 @@ export function useWeather(): UseWeatherResult {
 
   const searchCity = useCallback(
     (city: string): void => {
-      void fetchWeather(new URLSearchParams({ city }));
+      void fetchWeather(new URLSearchParams({ city }), 'city');
     },
     [fetchWeather]
   );
@@ -88,7 +92,8 @@ export function useWeather(): UseWeatherResult {
   const searchCoords = useCallback(
     (latitude: number, longitude: number): void => {
       void fetchWeather(
-        new URLSearchParams({ lat: String(latitude), lon: String(longitude) })
+        new URLSearchParams({ lat: String(latitude), lon: String(longitude) }),
+        'coords'
       );
     },
     [fetchWeather]

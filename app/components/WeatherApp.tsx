@@ -3,6 +3,8 @@
 import { temperatureUnitPreference } from '@/lib/weather/units';
 import { useWeather } from '../hooks/useWeather';
 import { CurrentWeather } from './CurrentWeather';
+import { FavouriteButton } from './FavouriteButton';
+import { FavouriteCities } from './FavouriteCities';
 import { Forecast } from './Forecast';
 import { LocationButton } from './LocationButton';
 import { SearchBar } from './SearchBar';
@@ -43,12 +45,19 @@ export function WeatherApp() {
         <LocationButton onLocate={locateUser} disabled={isLoading} />
       </div>
 
+      <FavouriteCities onSelect={searchCity} disabled={isLoading} />
+
       {state.status === 'success' ? (
         <>
           <CurrentWeather
             location={state.report.location}
             current={state.report.current}
             unit={unit}
+            headerAction={
+              state.source === 'city' && (
+                <FavouriteButton city={state.report.location} />
+              )
+            }
           />
           <Forecast daily={state.report.daily} unit={unit} />
         </>
