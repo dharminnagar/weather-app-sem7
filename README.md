@@ -34,6 +34,16 @@ bun run typecheck
 bun run lint
 ```
 
+## Quality checks
+
+| Where                                       | Runs                                                                                  |
+| ------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Husky `pre-commit` (lint-staged)            | ESLint `--fix` and Prettier on staged files                                           |
+| Husky `pre-push`                            | `bun run typecheck`, `bun test`                                                       |
+| GitHub Actions (`.github/workflows/ci.yml`) | ESLint, Prettier check, typecheck, tests, `next build` on every PR and push to `main` |
+
+ESLint includes `eslint-plugin-prettier`, so formatting drift fails lint too.
+
 ## Weather API
 
 ### `GET /api/weather`
