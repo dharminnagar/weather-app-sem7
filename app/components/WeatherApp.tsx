@@ -9,6 +9,7 @@ import { Forecast } from './Forecast';
 import { LocationButton } from './LocationButton';
 import { SearchBar } from './SearchBar';
 import { StatusMessage } from './StatusMessage';
+import { TemperatureTrend } from './TemperatureTrend';
 
 const GEOLOCATION_OPTIONS: PositionOptions = {
   timeout: 10_000,
@@ -59,6 +60,7 @@ export function WeatherApp() {
               )
             }
           />
+          <TemperatureTrend daily={state.report.daily} unit={unit} />
           <Forecast daily={state.report.daily} unit={unit} />
         </>
       ) : (
