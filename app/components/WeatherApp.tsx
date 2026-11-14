@@ -1,5 +1,6 @@
 'use client';
 
+import { locate } from '@/lib/geolocation';
 import { temperatureUnitPreference } from '@/lib/weather/units';
 import { useWeather } from '../hooks/useWeather';
 import { CurrentWeather } from './CurrentWeather';
@@ -11,31 +12,16 @@ import { SearchBar } from './SearchBar';
 import { StatusMessage } from './StatusMessage';
 import { TemperatureTrend } from './TemperatureTrend';
 
-const GEOLOCATION_OPTIONS: PositionOptions = {
-  timeout: 10_000,
-  maximumAge: 600_000,
-};
-
-const describeGeolocationError = (error: GeolocationPositionError): string =>
-  error.code === error.PERMISSION_DENIED
-    ? 'Location permission was denied. Search for a city instead.'
-    : 'Could not determine your location.';
-
 export function WeatherApp() {
   const { state, searchCity, searchCoords, startLoading, fail } = useWeather();
   const [unit] = temperatureUnitPreference.use();
   const isLoading = state.status === 'loading';
 
   const locateUser = (): void => {
-    if (!('geolocation' in navigator)) {
-      fail('Your browser does not support location access.');
-      return;
-    }
     startLoading();
-    navigator.geolocation.getCurrentPosition(
-      ({ coords }) => searchCoords(coords.latitude, coords.longitude),
-      (error) => fail(describeGeolocationError(error)),
-      GEOLOCATION_OPTIONS
+    locate(navigator.geolocation).then(
+      ({ latitude, longitude }) => searchCoords(latitude, longitude),
+      (error: Error) => fail(error.message)
     );
   };
 
