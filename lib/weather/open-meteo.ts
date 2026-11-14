@@ -1,10 +1,12 @@
 import { describeWeatherCode } from './codes';
+import type { WeatherProvider } from './provider';
 import type {
   CurrentWeather,
   DailyForecast,
   Location,
   WeatherReport,
 } from './types';
+import { UpstreamError } from './upstream-error';
 
 const GEOCODING_URL = 'https://geocoding-api.open-meteo.com/v1/search';
 const FORECAST_URL = 'https://api.open-meteo.com/v1/forecast';
@@ -62,23 +64,22 @@ interface RawForecastResponse {
   daily: RawDaily;
 }
 
-/** Thrown when Open-Meteo responds with a non-OK HTTP status. */
-export class UpstreamError extends Error {
-  constructor(
-    readonly service: string,
-    readonly status: number
-  ) {
-    super(`${service} responded with HTTP ${status}`);
-    this.name = 'UpstreamError';
-  }
-}
-
+/** Fetches JSON, reporting every way Open-Meteo can fail as `UpstreamError`. */
 async function getJson<T>(url: URL, service: string): Promise<T> {
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new UpstreamError(service, res.status);
+  let response: Response;
+  try {
+    response = await fetch(url);
+  } catch (cause) {
+    throw new UpstreamError(service, 'unreachable', { cause });
   }
-  return (await res.json()) as T;
+  if (!response.ok) {
+    throw new UpstreamError(service, response.status);
+  }
+  try {
+    return (await response.json()) as T;
+  } catch (cause) {
+    throw new UpstreamError(service, 'invalid-response', { cause });
+  }
 }
 
 /** Resolves a city name to its best-matching location, or null if unknown. */
@@ -148,3 +149,5 @@ export async function fetchForecast(
     daily: toDailyForecasts(body.daily),
   };
 }
+
+export const openMeteo: WeatherProvider = { geocodeCity, fetchForecast };
