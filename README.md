@@ -23,6 +23,17 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000). No API key is needed.
 
+## Testing
+
+Unit tests use Bun's built-in runner and live next to the code they cover
+(`*.test.ts`). Open-Meteo is never called; tests stub `fetch`.
+
+```bash
+bun test
+bun run typecheck
+bun run lint
+```
+
 ## Weather API
 
 ### `GET /api/weather`
