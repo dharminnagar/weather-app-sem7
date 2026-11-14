@@ -1,10 +1,12 @@
-import { useCallback, useSyncExternalStore } from 'react';
+import { useSyncExternalStore } from 'react';
 
 export type StoredPreference<Value extends string> = {
   /** React hook returning the current value and a setter that persists it. */
   use: () => [Value, (next: Value) => void];
   /** Reads the persisted value outside React; falls back when unset or invalid. */
   read: () => Value;
+  /** Persists a value and notifies every subscribed component. */
+  write: (next: Value) => void;
 };
 
 /**
@@ -58,9 +60,8 @@ export function createStoredPreference<Value extends string>(
 
   const use = (): [Value, (next: Value) => void] => {
     const value = useSyncExternalStore(subscribe, read, getServerSnapshot);
-    const setValue = useCallback((next: Value) => write(next), []);
-    return [value, setValue];
+    return [value, write];
   };
 
-  return { use, read };
+  return { use, read, write };
 }
