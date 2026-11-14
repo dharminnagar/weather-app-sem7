@@ -2,17 +2,23 @@ import type {
   CurrentWeather as CurrentWeatherData,
   Location,
 } from '@/lib/weather/types';
+import { formatTemperature, type TemperatureUnit } from '@/lib/weather/units';
 
 export type CurrentWeatherProps = {
   location: Location;
   current: CurrentWeatherData;
+  unit: TemperatureUnit;
 };
 
 /** `time` is already local to the location ("YYYY-MM-DDTHH:MM"), so no Date conversion. */
 const formatLocalClockTime = (localDateTime: string): string =>
   localDateTime.slice(11, 16);
 
-export function CurrentWeather({ location, current }: CurrentWeatherProps) {
+export function CurrentWeather({
+  location,
+  current,
+  unit,
+}: CurrentWeatherProps) {
   const updatedAt = formatLocalClockTime(current.time);
 
   return (
@@ -43,7 +49,7 @@ export function CurrentWeather({ location, current }: CurrentWeatherProps) {
         </span>
         <div>
           <p className="text-6xl font-semibold tracking-tight tabular-nums sm:text-7xl">
-            {Math.round(current.temperatureC)}°C
+            {formatTemperature(current.temperatureC, unit)}
           </p>
           <p className="mt-1 text-base text-zinc-700 dark:text-zinc-300">
             {current.condition.label}
@@ -54,7 +60,7 @@ export function CurrentWeather({ location, current }: CurrentWeatherProps) {
       <dl className="mt-6 grid grid-cols-3 gap-3 border-t border-zinc-200 pt-4 dark:border-zinc-800">
         <WeatherDetail
           term="Feels like"
-          value={`${Math.round(current.feelsLikeC)}°C`}
+          value={formatTemperature(current.feelsLikeC, unit)}
         />
         <WeatherDetail
           term="Humidity"

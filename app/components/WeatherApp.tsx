@@ -1,5 +1,6 @@
 'use client';
 
+import { temperatureUnitPreference } from '@/lib/weather/units';
 import { useWeather } from '../hooks/useWeather';
 import { CurrentWeather } from './CurrentWeather';
 import { Forecast } from './Forecast';
@@ -19,6 +20,7 @@ const describeGeolocationError = (error: GeolocationPositionError): string =>
 
 export function WeatherApp() {
   const { state, searchCity, searchCoords, startLoading, fail } = useWeather();
+  const [unit] = temperatureUnitPreference.use();
   const isLoading = state.status === 'loading';
 
   const locateUser = (): void => {
@@ -46,8 +48,9 @@ export function WeatherApp() {
           <CurrentWeather
             location={state.report.location}
             current={state.report.current}
+            unit={unit}
           />
-          <Forecast daily={state.report.daily} />
+          <Forecast daily={state.report.daily} unit={unit} />
         </>
       ) : (
         <StatusMessage
