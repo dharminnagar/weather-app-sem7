@@ -10,7 +10,9 @@ proxies [Open-Meteo](https://open-meteo.com) for geocoding and forecasts.
 - "Use my location" via the browser's geolocation (with permission)
 - Current temperature, feels-like, humidity and wind
 - 7-day forecast with highs, lows and chance of rain
-- Loading, empty and error states; dark mode follows the system setting
+- Switch temperatures between °C and °F (remembered across visits)
+- Loading, empty and error states
+- Light, dark or system theme toggle (remembered, no flash on reload)
 
 ## Running locally
 

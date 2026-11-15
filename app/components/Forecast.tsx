@@ -1,7 +1,9 @@
 import type { DailyForecast } from '@/lib/weather/types';
+import { formatTemperature, type TemperatureUnit } from '@/lib/weather/units';
 
 export type ForecastProps = {
   daily: DailyForecast[];
+  unit: TemperatureUnit;
 };
 
 const weekdayFormatter = new Intl.DateTimeFormat('en-US', {
@@ -15,7 +17,7 @@ const formatDayLabel = (isoDate: string, index: number): string =>
     ? 'Today'
     : weekdayFormatter.format(new Date(`${isoDate}T12:00:00Z`));
 
-export function Forecast({ daily }: ForecastProps) {
+export function Forecast({ daily, unit }: ForecastProps) {
   return (
     <section
       aria-labelledby="forecast-heading"
@@ -52,11 +54,11 @@ export function Forecast({ daily }: ForecastProps) {
             <span className="text-right tabular-nums">
               <span className="font-semibold">
                 <span className="sr-only">High </span>
-                {Math.round(day.maxC)}°
+                {formatTemperature(day.maxC, unit, { withUnit: false })}
               </span>
               <span className="ml-2 text-zinc-600 dark:text-zinc-400">
                 <span className="sr-only">Low </span>
-                {Math.round(day.minC)}°
+                {formatTemperature(day.minC, unit, { withUnit: false })}
               </span>
             </span>
           </li>
