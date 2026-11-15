@@ -142,6 +142,21 @@ describe('fetchForecast', () => {
   });
 });
 
+describe('night', () => {
+  test('uses night icons for current conditions after dark', async () => {
+    respondWith({
+      ...FORECAST_BODY,
+      current: { ...FORECAST_BODY.current, weather_code: 0, is_day: 0 },
+    });
+
+    const report = await fetchForecast(AHMEDABAD);
+
+    expect(report.current.isDay).toBe(false);
+    expect(report.current.condition.icon).toBe('🌙');
+    expect(report.daily[0].condition.icon).toBe('☀️');
+  });
+});
+
 describe('failures', () => {
   test('reports an unreachable network as UpstreamError', async () => {
     spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('fetch failed'));

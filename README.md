@@ -9,7 +9,7 @@ proxies [Open-Meteo](https://open-meteo.com) for geocoding and forecasts.
 - Search current conditions by city name
 - "Use my location" via the browser's geolocation (with permission)
 - Save up to 8 favourite cities with ★ and reopen them in one click (remembered across visits)
-- Current temperature, feels-like, humidity and wind
+- Current temperature, feels-like, humidity and wind, with night icons after dark (🌙 instead of ☀️)
 - 7-day forecast with highs, lows and chance of rain
 - Temperature trend chart of daily highs and lows (follows °C/°F and the theme)
 - Switch temperatures between °C and °F (remembered across visits)

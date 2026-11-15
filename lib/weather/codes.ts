@@ -38,7 +38,22 @@ const UNKNOWN_CONDITION: ConditionDescription = {
   icon: '🌡️',
 };
 
-/** Maps a WMO weather interpretation code to a human-readable condition. */
-export function describeWeatherCode(code: number): WeatherCondition {
-  return { code, ...(WMO_CONDITIONS[code] ?? UNKNOWN_CONDITION) };
+/** Night replacements for the day icons that show a sun. */
+const NIGHT_ICONS: Readonly<Record<string, string>> = {
+  '☀️': '🌙',
+  '🌤️': '🌙',
+  '⛅': '☁️',
+  '🌦️': '🌧️',
+};
+
+/**
+ * Maps a WMO weather interpretation code to a human-readable condition.
+ * Pass `isDay: false` for conditions observed after dark.
+ */
+export function describeWeatherCode(
+  code: number,
+  { isDay = true }: { isDay?: boolean } = {}
+): WeatherCondition {
+  const { label, icon } = WMO_CONDITIONS[code] ?? UNKNOWN_CONDITION;
+  return { code, label, icon: isDay ? icon : (NIGHT_ICONS[icon] ?? icon) };
 }
