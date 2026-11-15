@@ -37,11 +37,18 @@ describe('createStoredPreference', () => {
     expect(color.read()).toBe('red');
   });
 
-  test('falls back when storage throws', () => {
+  test('reads the fallback when storage throws', () => {
+    fakeWindow.breakStorage();
+    const color = createStoredPreference('color', COLORS, 'red');
+
+    expect(color.read()).toBe('red');
+  });
+
+  test('keeps a choice for this page when storage throws', () => {
     fakeWindow.breakStorage();
     const color = createStoredPreference('color', COLORS, 'red');
 
     expect(() => color.write('blue')).not.toThrow();
-    expect(color.read()).toBe('red');
+    expect(color.read()).toBe('blue');
   });
 });

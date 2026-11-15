@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type {
   CurrentWeather as CurrentWeatherData,
   Location,
@@ -8,6 +9,8 @@ export type CurrentWeatherProps = {
   location: Location;
   current: CurrentWeatherData;
   unit: TemperatureUnit;
+  /** Rendered beside the location name, e.g. a save-to-favourites button. */
+  headerAction?: ReactNode;
 };
 
 /** `time` is already local to the location ("YYYY-MM-DDTHH:MM"), so no Date conversion. */
@@ -18,6 +21,7 @@ export function CurrentWeather({
   location,
   current,
   unit,
+  headerAction,
 }: CurrentWeatherProps) {
   const updatedAt = formatLocalClockTime(current.time);
 
@@ -27,17 +31,20 @@ export function CurrentWeather({
       className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-6 dark:border-zinc-800 dark:bg-zinc-900"
     >
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <h2
-          id="current-weather-heading"
-          className="text-xl font-semibold tracking-tight"
-        >
-          {location.name}
-          {location.country && (
-            <span className="font-normal text-zinc-600 dark:text-zinc-400">
-              , {location.country}
-            </span>
-          )}
-        </h2>
+        <div className="flex items-center gap-2">
+          <h2
+            id="current-weather-heading"
+            className="text-xl font-semibold tracking-tight"
+          >
+            {location.name}
+            {location.country && (
+              <span className="font-normal text-zinc-600 dark:text-zinc-400">
+                , {location.country}
+              </span>
+            )}
+          </h2>
+          {headerAction}
+        </div>
         <p className="text-sm text-zinc-600 dark:text-zinc-400">
           Updated <time dateTime={current.time}>{updatedAt}</time>
         </p>
