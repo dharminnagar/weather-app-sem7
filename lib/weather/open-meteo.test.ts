@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, mock, spyOn, test } from 'bun:test';
-import { fetchForecast, geocodeCity, UpstreamError } from './open-meteo';
+import { fetchForecast, geocodeCity, openMeteo } from './open-meteo';
+import { UpstreamError } from './upstream-error';
 import type { Location } from './types';
 
 const AHMEDABAD: Location = {
@@ -138,5 +139,27 @@ describe('fetchForecast', () => {
     await expect(fetchForecast(AHMEDABAD)).rejects.toBeInstanceOf(
       UpstreamError
     );
+  });
+});
+
+describe('failures', () => {
+  test('reports an unreachable network as UpstreamError', async () => {
+    spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('fetch failed'));
+
+    await expect(geocodeCity('Paris')).rejects.toBeInstanceOf(UpstreamError);
+  });
+
+  test('reports a body that is not JSON as UpstreamError', async () => {
+    spyOn(globalThis, 'fetch').mockResolvedValue(new Response('<html>'));
+
+    await expect(fetchForecast(AHMEDABAD)).rejects.toBeInstanceOf(
+      UpstreamError
+    );
+  });
+});
+
+describe('openMeteo provider', () => {
+  test('exposes both lookups', () => {
+    expect(openMeteo).toEqual({ geocodeCity, fetchForecast });
   });
 });
