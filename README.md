@@ -38,6 +38,42 @@ bun run typecheck
 bun run lint
 ```
 
+### API tests (Postman)
+
+`tests/postman/weather-api.postman_collection.json` checks the `/api/weather`
+contract: response shape for city and coordinate lookups, every `400`
+validation message, the `404` for an unknown city, and the `{ "error": string }`
+error body. It calls the live Open-Meteo API, so start the app first.
+
+```bash
+bun run dev
+bun run test:api
+```
+
+`test:api` uses the [Postman CLI](https://learning.postman.com/docs/postman-cli/postman-cli-installation/).
+To use the Postman app instead, import the collection and
+`tests/postman/local.postman_environment.json`, then run the collection.
+`newman run` also works with the same two files.
+
+### End-to-end tests (Selenium)
+
+`tests/e2e/weather.e2e.ts` drives Chrome through each user story: searching,
+the unknown-city error, °C/°F, dark mode, favourite cities and the phone
+layout. Selenium Manager downloads a matching ChromeDriver on first run.
+
+```bash
+bun run dev
+bun run test:e2e
+HEADED=1 bun run test:e2e
+E2E_BASE_URL=https://staging.example.test bun run test:e2e
+```
+
+`HEADED=1` shows the browser while the tests run. `E2E_BASE_URL` points the
+tests at another host.
+
+Neither suite runs in CI or the git hooks, because both need a running app and
+network access. `bun test` runs only the unit tests.
+
 ## Quality checks
 
 | Where                                       | Runs                                                                                  |

@@ -9,6 +9,8 @@
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "bun test",
+    "test:api": "postman collection run tests/postman/weather-api.postman_collection.json -e tests/postman/local.postman_environment.json",
+    "test:e2e": "bun test ./tests/e2e/weather.e2e.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prepare": "husky"
@@ -24,6 +26,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/selenium-webdriver": "^4.35.7",
     "eslint": "^9",
     "eslint-config-next": "16.4.3",
     "eslint-config-prettier": "^10.1.8",
@@ -31,6 +34,7 @@
     "husky": "^9.1.7",
     "lint-staged": "^17.6.0",
     "prettier": "^3.9.10",
+    "selenium-webdriver": "^4.52.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   },

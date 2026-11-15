@@ -1,0 +1,499 @@
+{
+  "info": {
+    "_postman_id": "3f7ea376-f16c-5dbc-971b-abc96f7dbd25",
+    "name": "Weather API",
+    "description": "Contract tests for `GET /api/weather` (current weather and a 7-day forecast via Open-Meteo).\n\nSet `baseUrl` with the `Local` environment (default `http://localhost:3000`). Run with:\n\n`bun run test:api`",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.test('responds with JSON', () => {",
+          "  pm.response.to.have.header('Content-Type');",
+          "  pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
+          "});",
+          "",
+          "pm.test(`responds within ${pm.environment.get('maxResponseMs') || 8000} ms`, () => {",
+          "  pm.expect(pm.response.responseTime).to.be.below(Number(pm.environment.get('maxResponseMs') || 8000));",
+          "});",
+          "",
+          "if (pm.response.code >= 400) {",
+          "  pm.test('error body is exactly { error: string }', () => {",
+          "    const body = pm.response.json();",
+          "    pm.expect(Object.keys(body)).to.eql(['error']);",
+          "    pm.expect(body.error).to.be.a('string').and.not.empty;",
+          "  });",
+          "}"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "Weather lookups",
+      "description": "Successful lookups by city name and by coordinates. These call the live Open-Meteo API.",
+      "item": [
+        {
+          "name": "By city",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const report = pm.response.json();",
+                  "",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "pm.test('has a location', () => {",
+                  "  pm.expect(report.location).to.be.an('object');",
+                  "  pm.expect(report.location.name).to.be.a('string').and.not.empty;",
+                  "  pm.expect(report.location.latitude).to.be.within(-90, 90);",
+                  "  pm.expect(report.location.longitude).to.be.within(-180, 180);",
+                  "});",
+                  "",
+                  "pm.test('has current conditions in metric units', () => {",
+                  "  const current = report.current;",
+                  "  pm.expect(current.temperatureC).to.be.a('number');",
+                  "  pm.expect(current.feelsLikeC).to.be.a('number');",
+                  "  pm.expect(current.humidityPercent).to.be.within(0, 100);",
+                  "  pm.expect(current.windSpeedKmh).to.be.at.least(0);",
+                  "  pm.expect(current.isDay).to.be.a('boolean');",
+                  "  pm.expect(current.time).to.match(/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}/);",
+                  "  pm.expect(current.condition.label).to.be.a('string').and.not.empty;",
+                  "  pm.expect(current.condition.icon).to.be.a('string').and.not.empty;",
+                  "});",
+                  "",
+                  "pm.test('has a 7-day forecast in date order with highs above lows', () => {",
+                  "  pm.expect(report.daily).to.have.lengthOf(7);",
+                  "  report.daily.forEach((day, index) => {",
+                  "    pm.expect(day.date).to.match(/^\\d{4}-\\d{2}-\\d{2}$/);",
+                  "    pm.expect(day.maxC).to.be.at.least(day.minC);",
+                  "    if (index > 0) pm.expect(day.date > report.daily[index - 1].date).to.be.true;",
+                  "  });",
+                  "});",
+                  "",
+                  "pm.test('finds the requested city', () => {",
+                  "  pm.expect(report.location.name).to.eql('London');",
+                  "  pm.expect(report.location.country).to.eql('United Kingdom');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/weather?city=London",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "weather"],
+              "query": [
+                {
+                  "key": "city",
+                  "value": "London"
+                }
+              ]
+            },
+            "description": "Looks up a city by name."
+          }
+        },
+        {
+          "name": "By city, trimmed and case-insensitive",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('normalises the city name', () => {",
+                  "  pm.expect(pm.response.json().location.name).to.eql('Tokyo');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/weather?city=%20%20tokyo%20%20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "weather"],
+              "query": [
+                {
+                  "key": "city",
+                  "value": "%20%20tokyo%20%20"
+                }
+              ]
+            },
+            "description": "Surrounding spaces and lowercase input still find the city."
+          }
+        },
+        {
+          "name": "By coordinates",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const report = pm.response.json();",
+                  "",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "pm.test('has a location', () => {",
+                  "  pm.expect(report.location).to.be.an('object');",
+                  "  pm.expect(report.location.name).to.be.a('string').and.not.empty;",
+                  "  pm.expect(report.location.latitude).to.be.within(-90, 90);",
+                  "  pm.expect(report.location.longitude).to.be.within(-180, 180);",
+                  "});",
+                  "",
+                  "pm.test('has current conditions in metric units', () => {",
+                  "  const current = report.current;",
+                  "  pm.expect(current.temperatureC).to.be.a('number');",
+                  "  pm.expect(current.feelsLikeC).to.be.a('number');",
+                  "  pm.expect(current.humidityPercent).to.be.within(0, 100);",
+                  "  pm.expect(current.windSpeedKmh).to.be.at.least(0);",
+                  "  pm.expect(current.isDay).to.be.a('boolean');",
+                  "  pm.expect(current.time).to.match(/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}/);",
+                  "  pm.expect(current.condition.label).to.be.a('string').and.not.empty;",
+                  "  pm.expect(current.condition.icon).to.be.a('string').and.not.empty;",
+                  "});",
+                  "",
+                  "pm.test('has a 7-day forecast in date order with highs above lows', () => {",
+                  "  pm.expect(report.daily).to.have.lengthOf(7);",
+                  "  report.daily.forEach((day, index) => {",
+                  "    pm.expect(day.date).to.match(/^\\d{4}-\\d{2}-\\d{2}$/);",
+                  "    pm.expect(day.maxC).to.be.at.least(day.minC);",
+                  "    if (index > 0) pm.expect(day.date > report.daily[index - 1].date).to.be.true;",
+                  "  });",
+                  "});",
+                  "",
+                  "pm.test('echoes the coordinates as \"Your location\"', () => {",
+                  "  pm.expect(report.location.name).to.eql('Your location');",
+                  "  pm.expect(report.location.latitude).to.be.closeTo(48.8566, 0.0001);",
+                  "  pm.expect(report.location.longitude).to.be.closeTo(2.3522, 0.0001);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/weather?lat=48.8566&lon=2.3522",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "weather"],
+              "query": [
+                {
+                  "key": "lat",
+                  "value": "48.8566"
+                },
+                {
+                  "key": "lon",
+                  "value": "2.3522"
+                }
+              ]
+            },
+            "description": "Looks up weather for a latitude/longitude pair, as the \"Use my location\" button does."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Errors",
+      "description": "Invalid input returns 400 and an unknown city returns 404, each with a readable message.",
+      "item": [
+        {
+          "name": "Unknown city",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 404', () => pm.response.to.have.status(404));",
+                  "pm.test('explains the problem', () => {",
+                  "  pm.expect(pm.response.json().error).to.eql(\"City \\\"Qwzxyplorkville\\\" not found\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/weather?city=Qwzxyplorkville",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "weather"],
+              "query": [
+                {
+                  "key": "city",
+                  "value": "Qwzxyplorkville"
+                }
+              ]
+            },
+            "description": "A city the geocoder cannot find."
+          }
+        },
+        {
+          "name": "Blank city",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', () => pm.response.to.have.status(400));",
+                  "pm.test('explains the problem', () => {",
+                  "  pm.expect(pm.response.json().error).to.eql(\"City must not be blank\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/weather?city=%20%20%20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "weather"],
+              "query": [
+                {
+                  "key": "city",
+                  "value": "%20%20%20"
+                }
+              ]
+            },
+            "description": "Only whitespace."
+          }
+        },
+        {
+          "name": "City too long",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', () => pm.response.to.have.status(400));",
+                  "pm.test('explains the problem', () => {",
+                  "  pm.expect(pm.response.json().error).to.eql(\"City must be at most 100 characters\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/weather?city=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "weather"],
+              "query": [
+                {
+                  "key": "city",
+                  "value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                }
+              ]
+            },
+            "description": "101 characters; the limit is 100."
+          }
+        },
+        {
+          "name": "No query",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', () => pm.response.to.have.status(400));",
+                  "pm.test('explains the problem', () => {",
+                  "  pm.expect(pm.response.json().error).to.eql(\"Provide either \\\"city\\\" or both \\\"lat\\\" and \\\"lon\\\"\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/weather",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "weather"]
+            },
+            "description": "Neither a city nor coordinates."
+          }
+        },
+        {
+          "name": "Only latitude",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', () => pm.response.to.have.status(400));",
+                  "pm.test('explains the problem', () => {",
+                  "  pm.expect(pm.response.json().error).to.eql(\"Provide either \\\"city\\\" or both \\\"lat\\\" and \\\"lon\\\"\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/weather?lat=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "weather"],
+              "query": [
+                {
+                  "key": "lat",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Coordinates need both parts."
+          }
+        },
+        {
+          "name": "Latitude out of range",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', () => pm.response.to.have.status(400));",
+                  "pm.test('explains the problem', () => {",
+                  "  pm.expect(pm.response.json().error).to.eql(\"\\\"lat\\\" must be within -90..90 and \\\"lon\\\" within -180..180\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/weather?lat=91&lon=0",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "weather"],
+              "query": [
+                {
+                  "key": "lat",
+                  "value": "91"
+                },
+                {
+                  "key": "lon",
+                  "value": "0"
+                }
+              ]
+            },
+            "description": "Latitude above 90."
+          }
+        },
+        {
+          "name": "Longitude not a number",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', () => pm.response.to.have.status(400));",
+                  "pm.test('explains the problem', () => {",
+                  "  pm.expect(pm.response.json().error).to.eql(\"\\\"lat\\\" must be within -90..90 and \\\"lon\\\" within -180..180\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/weather?lat=0&lon=east",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "weather"],
+              "query": [
+                {
+                  "key": "lat",
+                  "value": "0"
+                },
+                {
+                  "key": "lon",
+                  "value": "east"
+                }
+              ]
+            },
+            "description": "Non-numeric longitude."
+          }
+        }
+      ]
+    }
+  ]
+}
