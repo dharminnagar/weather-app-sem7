@@ -113,7 +113,9 @@ function toCurrentWeather(raw: RawCurrent): CurrentWeather {
     humidityPercent: raw.relative_humidity_2m,
     windSpeedKmh: raw.wind_speed_10m,
     isDay: raw.is_day === 1,
-    condition: describeWeatherCode(raw.weather_code),
+    condition: describeWeatherCode(raw.weather_code, {
+      isDay: raw.is_day === 1,
+    }),
   };
 }
 
